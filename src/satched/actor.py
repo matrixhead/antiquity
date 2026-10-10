@@ -14,6 +14,7 @@ from typing import Any, Generic, TypeVar
 
 S = TypeVar("S", bound="State")
 O = TypeVar("O", bound="OrchestratorState")
+L = TypeVar("L", bound="LeafActorState")
 
 
 class Actor(ABC, Generic[S]):
@@ -69,16 +70,16 @@ class Orchestrator(Actor[O]):
             state.children_state[decision.name] = result
 
 
-class LeafActor(Actor["LeafActorState"]):
+class LeafActor(Actor[L]):
     """An actor backed by a Temporal activity."""
 
     def __init__(
-        self, name: str, activity: Callable[[LeafActorState], LeafActorState]
+        self, name: str, activity: Callable[[L], L]
     ) -> None:
         super().__init__(name)
         self.activity = activity
 
-    def _execute(self, state: LeafActorState) -> LeafActorState:
+    def _execute(self, state: L) -> L:
         """Run the backing activity on the given state."""
         return self.activity(state)
 
