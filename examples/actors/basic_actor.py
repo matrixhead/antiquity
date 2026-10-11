@@ -1,5 +1,5 @@
 
-from satched.actor import run, Orchestrator, LeafActor, OrchestratorState, Decision, LeafActorState
+from satched.core import run, Orchestrator, LeafActor, OrchestratorState, Decision, LeafActorState
 
 class DummyState(OrchestratorState):
     def __init__(self):
@@ -12,12 +12,10 @@ class NewDummyState(OrchestratorState):
 def my_decider(s: DummyState) -> Decision:
    return Decision(name="dummy")
 
-dummyleafactorstate = LeafActorState()
 
 run(
-    Orchestrator(
+    Orchestrator[DummyState](
         name= "",
-        state= DummyState(),
         decider= my_decider,
         actors=[
             LeafActor(
