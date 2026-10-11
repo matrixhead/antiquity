@@ -37,11 +37,9 @@ class Orchestrator(Actor[O]):
         self,
         name: str,
         actors: list[Actor[State]],
-        decider: Callable[[O], Decision],
     ) -> None:
         super().__init__(name)
         self.actors = actors
-        self.decider = decider
 
 
 
