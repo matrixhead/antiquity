@@ -68,11 +68,11 @@ class LeafActor(Actor[L]):
     ) -> None:
         super().__init__(name)
 
-    def execute(self, state: L) -> Any:
+    def execute(self, state: L) -> L:
         return self.run_activity(state)
 
     @abstractmethod
-    def run_activity(self, state: L) -> Any:
+    def run_activity(self, state: L) -> L:
         pass
 
 

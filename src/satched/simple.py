@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from satched.core import (
     Actor,
@@ -15,11 +16,9 @@ from satched.core import (
 )
 
 
+@dataclass
 class SimpleOrchestratorState(OrchestratorState):
-    actor: SimpleOrchestrator
-
-    def decide(self) -> Decision | None:
-        return self.actor.decider(self)
+    pass
 
 
 class SimpleOrchestrator(Orchestrator[SimpleOrchestratorState]):
@@ -36,6 +35,9 @@ class SimpleOrchestrator(Orchestrator[SimpleOrchestratorState]):
         super().__init__(name, actors)
         self.decider = decider
 
+    def decide(self, state: SimpleOrchestratorState) -> Decision | None:
+        return self.decider(state)
+
 
 class SimpleLeafActorState(LeafActorState):
     pass
@@ -45,3 +47,14 @@ class SimpleLeafActor(LeafActor[SimpleLeafActorState]):
     """A simple leaf actor."""
 
     state_type = SimpleLeafActorState
+
+    def __init__(
+        self,
+        name: str,
+        activity: Callable[[SimpleLeafActorState], SimpleLeafActorState],
+    ) -> None:
+        super().__init__(name, activity)
+        self.activity = activity
+
+    def run_activity(self, state: SimpleLeafActorState) -> SimpleLeafActorState:
+        return self.activity(state)
