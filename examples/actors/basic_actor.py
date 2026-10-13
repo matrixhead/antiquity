@@ -1,37 +1,32 @@
+"""A basic example: a simple orchestrator running a fixed flow of leaf actors."""
 
-from satched.core import run, Orchestrator, LeafActor, OrchestratorState, Decision, LeafActorState
+from __future__ import annotations
+from satched import run, Orchestrator
 
-class DummyState(OrchestratorState):
-    def __init__(self):
-            super().__init__(children_state={})
+from collections.abc import Callable
+from typing import Any
 
-class NewDummyState(OrchestratorState):
-    def __init__(self):
-            super().__init__(children_state={})
-
-def my_decider(s: DummyState) -> Decision:
-   return Decision(name="dummy")
-
-
-run(
-    Orchestrator[DummyState](
-        name= "",
-        decider= my_decider,
-        actors=[
-            LeafActor(
-                name = "mult",
-                activity=lambda dummyleafactorstate : dummyleafactorstate
-            ),
-            LeafActor(
-                name = "sub",
-                activity=lambda dummyleafactorstate : dummyleafactorstate
-            ),
-            LeafActor(
-                name = "div",
-                activity=lambda dummyleafactorstate : dummyleafactorstate
-            ),
-
-        ]
-    )
-
+from satched.core import Actor, Decision
+from satched.simple import (
+    SimpleLeafActor,
+    SimpleLeafActorState,
+    SimpleOrchestrator,
+    SimpleOrchestratorState,
 )
+
+
+def decider(state: SimpleOrchestratorState) -> Decision | None:
+    return None
+
+def activity(state: SimpleLeafActorState) -> SimpleLeafActorState:
+    return state
+run(
+    SimpleOrchestrator(
+        name="fsf",
+        decider= decider,
+        actors = [SimpleLeafActor(name="mutli",activity= activity)]
+
+    )
+)
+
+

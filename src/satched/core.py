@@ -2,13 +2,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, cast
 
-S = TypeVar("S", bound="State")
-O = TypeVar("O", bound="OrchestratorState")
-L = TypeVar("L", bound="LeafActorState")
+S = TypeVar("S", bound="State", covariant=True)
+O = TypeVar("O", bound="OrchestratorState", covariant=True)
+L = TypeVar("L", bound="LeafActorState", covariant=True)
 
 
 class Actor(ABC, Generic[S]):
@@ -21,7 +20,7 @@ class Actor(ABC, Generic[S]):
         return self.state_type()
 
     @abstractmethod
-    def execute(self,state:S) -> Any:
+    def execute(self, state: State) -> Any:
         pass
 
 @dataclass
@@ -47,32 +46,28 @@ class Orchestrator(Actor[O]):
             state.children_state[name] = actor.make_state()
         return state
 
-    def execute(self, state: O) -> Any:
+    def execute(self, state: State) -> Any:
         """Run decision/execute turns until a decision names no child actor."""
+        orch_state = cast(OrchestratorState, state)
         while True:
             decision = self.decide(state)
             if decision is None:
                 break
             actor = self.actors[decision.name]
-            actor.execute(state.children_state[decision.name])
+            actor.execute(orch_state.children_state[decision.name])
 
     @abstractmethod
-    def decide(self, state: O) -> Decision | None:
+    def decide(self, state: State) -> Decision | None:
         """Choose the next actor to invoke, or None to stop."""
 
 
 class LeafActor(Actor[L]):
 
-    def __init__(
-        self, name: str, activity: Callable[[L], L]
-    ) -> None:
-        super().__init__(name)
-
-    def execute(self, state: L) -> L:
+    def execute(self, state: State) -> L:
         return self.run_activity(state)
 
     @abstractmethod
-    def run_activity(self, state: L) -> L:
+    def run_activity(self, state: State) -> L:
         pass
 
 
