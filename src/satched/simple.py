@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, TypeVar
 
 from satched.core import (
     Actor,
@@ -13,7 +13,6 @@ from satched.core import (
     LeafActorState,
     Orchestrator,
     OrchestratorState,
-    State,
 )
 
 
@@ -22,40 +21,44 @@ class SimpleOrchestratorState(OrchestratorState):
     pass
 
 
-class SimpleOrchestrator(Orchestrator[SimpleOrchestratorState]):
-    """A simple orchestrator."""
+SOS = TypeVar("SOS", bound="SimpleOrchestratorState")
 
-    state_type = SimpleOrchestratorState
+
+class SimpleOrchestrator(Orchestrator[SOS]):
+    """A simple orchestrator."""
 
     def __init__(
         self,
         name: str,
-        decider: Callable[[SimpleOrchestratorState], Decision | None],
-        actors: list[Actor[State]],
+        state_type: type[SOS],
+        decider: Callable[[SOS], Decision | None],
+        actors: Iterable[Actor[Any]],
     ) -> None:
-        super().__init__(name, actors)
+        super().__init__(name, state_type, actors)
         self.decider = decider
 
-    def decide(self, state: State) -> Decision | None:
-        return self.decider(cast(SimpleOrchestratorState, state))
+    def decide(self, state: SOS) -> Decision | None:
+        return self.decider(state)
 
 
 class SimpleLeafActorState(LeafActorState):
     pass
 
 
-class SimpleLeafActor(LeafActor[SimpleLeafActorState]):
-    """A simple leaf actor."""
+SLS = TypeVar("SLS", bound="SimpleLeafActorState")
 
-    state_type = SimpleLeafActorState
+
+class SimpleLeafActor(LeafActor[SLS]):
+    """A simple leaf actor."""
 
     def __init__(
         self,
         name: str,
-        activity: Callable[[SimpleLeafActorState], SimpleLeafActorState],
+        state_type: type[SLS],
+        activity: Callable[[SLS], SLS],
     ) -> None:
-        super().__init__(name)
+        super().__init__(name, state_type)
         self.activity = activity
 
-    def run_activity(self, state: State) -> SimpleLeafActorState:
-        return self.activity(cast(SimpleLeafActorState, state))
+    def run_activity(self, state: SLS) -> SLS:
+        return self.activity(state)

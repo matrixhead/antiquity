@@ -1,27 +1,42 @@
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Generic, TypeVar, cast
-
-S = TypeVar("S", bound="State", covariant=True)
-O = TypeVar("O", bound="OrchestratorState", covariant=True)
-L = TypeVar("L", bound="LeafActorState", covariant=True)
+from typing import Any, Generic, TypeVar
 
 
-class Actor(ABC, Generic[S]):
-    state_type: type[S]
+@dataclass
+class State:
+    """Base class for all actor state."""
 
-    def __init__(self, name: str) -> None:
+    pass
+
+
+ST = TypeVar("ST", bound="State")
+
+
+class Actor(ABC, Generic[ST]):
+
+    def __init__(self, name: str, state_type: type[ST]) -> None:
         self.name = name
+        self.state_type = state_type
 
-    def make_state(self) -> S:
+    def make_state(self) -> ST:
         return self.state_type()
 
     @abstractmethod
-    def execute(self, state: State) -> Any:
+    def execute(self, state: ST) -> Any:
         pass
+
+
+@dataclass
+class OrchestratorState(State):
+    children_state: dict[str, State] = field(default_factory=dict)
+
+
+OST = TypeVar("OST", bound="OrchestratorState")
+
 
 @dataclass
 class Decision:
@@ -30,50 +45,35 @@ class Decision:
     name: str
 
 
-class Orchestrator(Actor[O]):
+class Orchestrator(Actor[OST]):
 
     def __init__(
         self,
         name: str,
-        actors: list[Actor[State]],
+        state_type: type[OST],
+        actors: Iterable[Actor[Any]],
     ) -> None:
-        super().__init__(name)
-        self.actors: dict[str, Actor[State]] = {a.name: a for a in actors}
+        super().__init__(name, state_type)
+        self.actors: dict[str, Actor[Any]] = {a.name: a for a in actors}
 
-    def make_state(self) -> O:
+    def make_state(self) -> OST:
         state = self.state_type()
         for name, actor in self.actors.items():
             state.children_state[name] = actor.make_state()
         return state
 
-    def execute(self, state: State) -> Any:
+    def execute(self, state: OST) -> Any:
         """Run decision/execute turns until a decision names no child actor."""
-        orch_state = cast(OrchestratorState, state)
         while True:
             decision = self.decide(state)
             if decision is None:
                 break
             actor = self.actors[decision.name]
-            actor.execute(orch_state.children_state[decision.name])
+            actor.execute(state.children_state[decision.name])
 
     @abstractmethod
-    def decide(self, state: State) -> Decision | None:
+    def decide(self, state: OST) -> Decision | None:
         """Choose the next actor to invoke, or None to stop."""
-
-
-class LeafActor(Actor[L]):
-
-    def execute(self, state: State) -> L:
-        return self.run_activity(state)
-
-    @abstractmethod
-    def run_activity(self, state: State) -> L:
-        pass
-
-
-@dataclass
-class State(ABC):
-    pass
 
 
 @dataclass
@@ -81,13 +81,19 @@ class LeafActorState(State):
     pass
 
 
-@dataclass
-class OrchestratorState(State):
-
-    children_state: dict[str, State] = field(default_factory=dict)
+LST = TypeVar("LST", bound="LeafActorState")
 
 
+class LeafActor(Actor[LST]):
 
-def run(orchestrator: Orchestrator[O]) -> Any:
+    def execute(self, state: LST) -> LST:
+        return self.run_activity(state)
+
+    @abstractmethod
+    def run_activity(self, state: LST) -> LST:
+        pass
+
+
+def run(orchestrator: Orchestrator[OST]) -> Any:
     """Run an orchestrator."""
     ...
