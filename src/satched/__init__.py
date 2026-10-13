@@ -2,6 +2,7 @@
 
 from satched.core import (
     Actor,
+    ActorRef,
     Decision,
     LeafActor,
     LeafActorState,
@@ -21,6 +22,7 @@ __version__ = "0.1.0"
 
 __all__ = [
     "Actor",
+    "ActorRef",
     "Decision",
     "LeafActor",
     "LeafActorState",

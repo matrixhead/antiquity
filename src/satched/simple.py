@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import TypeVar
 
 from satched.core import (
-    Actor,
+    ActorRef,
     Decision,
     LeafActor,
     LeafActorState,
@@ -32,7 +32,7 @@ class SimpleOrchestrator(Orchestrator[SOS]):
         name: str,
         state_type: type[SOS],
         decider: Callable[[SOS], Decision | None],
-        actors: Iterable[Actor[Any]],
+        actors: Iterable[ActorRef],
     ) -> None:
         super().__init__(name, state_type, actors)
         self.decider = decider

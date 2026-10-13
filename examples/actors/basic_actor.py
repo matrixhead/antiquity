@@ -21,7 +21,7 @@ class MyState(SimpleLeafActorState):
 def decider(state: SimpleOrchestratorState) -> Decision | None:
     return None
 
-def activity(state: SimpleLeafActorState) -> SimpleLeafActorState:
+def activity(state: MyState) -> MyState:
     return state
 
 run(
@@ -29,7 +29,16 @@ run(
         name="fsf",
         state_type=SimpleOrchestratorState,
         decider= decider,
-        actors = [SimpleLeafActor(name="mutli",state_type=MyState,activity= activity)]
+        actors = [
+            SimpleLeafActor(name="mutli",state_type=MyState,activity= activity),
+            SimpleOrchestrator(
+                name="dsfsdf",
+                state_type=SimpleOrchestratorState,
+                decider=decider,
+                actors=[]
+            )
+            
+            ]
 
     )
 )

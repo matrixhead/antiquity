@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Protocol, TypeVar, cast
 
 
 @dataclass
@@ -29,6 +29,25 @@ class Actor(ABC, Generic[ST]):
     def execute(self, state: ST) -> Any:
         pass
 
+    def execute_any(self, state: State) -> Any:
+        """Type-erased entry point for callers that don't know this actor's ST."""
+        return self.execute(cast(ST, state))
+
+
+class ActorRef(Protocol):
+    """A type-erased actor: its concrete state type is unknown to the holder.
+
+    ``Actor[ST]`` satisfies this structurally (covariant ``make_state``, exact
+    ``execute_any``), so heterogeneous actors can be stored together without
+    falling back to ``Actor[Any]``.
+    """
+
+    name: str
+
+    def make_state(self) -> State: ...
+
+    def execute_any(self, state: State) -> Any: ...
+
 
 @dataclass
 class OrchestratorState(State):
@@ -51,10 +70,10 @@ class Orchestrator(Actor[OST]):
         self,
         name: str,
         state_type: type[OST],
-        actors: Iterable[Actor[Any]],
+        actors: Iterable[ActorRef],
     ) -> None:
         super().__init__(name, state_type)
-        self.actors: dict[str, Actor[Any]] = {a.name: a for a in actors}
+        self.actors: dict[str, ActorRef] = {a.name: a for a in actors}
 
     def make_state(self) -> OST:
         state = self.state_type()
@@ -69,7 +88,7 @@ class Orchestrator(Actor[OST]):
             if decision is None:
                 break
             actor = self.actors[decision.name]
-            actor.execute(state.children_state[decision.name])
+            actor.execute_any(state.children_state[decision.name])
 
     @abstractmethod
     def decide(self, state: OST) -> Decision | None:
