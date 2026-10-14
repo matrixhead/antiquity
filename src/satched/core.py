@@ -26,7 +26,7 @@ class Actor(ABC, Generic[ST]):
         return self.state_type()
 
     @abstractmethod
-    def execute(self, state: ST) -> Any:
+    def execute(self, state: ST) -> ST:
         pass
 
     def cast_state(self, state: State) -> ST:
@@ -83,14 +83,17 @@ class Orchestrator(Actor[OST]):
             state.children_state[name] = actor.make_state()
         return state
 
-    def execute(self, state: OST) -> Any:
+    def execute(self, state: OST) -> OST:
         """Run decision/execute turns until a decision names no child actor."""
         while True:
             decision = self.decide(state)
             if decision is None:
                 break
             actor = self.actors[decision.name]
-            actor.execute_any(state.children_state[decision.name])
+            state.children_state[decision.name] = actor.execute_any(
+                state.children_state[decision.name]
+            )
+        return state
 
     @abstractmethod
     def decide(self, state: OST) -> Decision | None:
