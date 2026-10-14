@@ -30,8 +30,12 @@ class Actor(ABC, Generic[ST]):
         pass
 
     def cast_state(self, state: State) -> ST:
-        """Type-erased entry point for callers that don't know this actor's ST."""
+        """Reinterpret a type-erased state as this actor's ST."""
         return cast(ST, state)
+
+    def execute_any(self, state: State) -> Any:
+        """Type-erased entry point for callers that don't know this actor's ST."""
+        return self.execute(self.cast_state(state))
 
 
 class ActorRef(Protocol):
@@ -44,7 +48,7 @@ class ActorRef(Protocol):
 
     def cast_state(self, state: State) -> State: ...
 
-    def execute(self, state: Any) -> Any: ...
+    def execute_any(self, state: State) -> Any: ...
 
 
 @dataclass
@@ -86,7 +90,7 @@ class Orchestrator(Actor[OST]):
             if decision is None:
                 break
             actor = self.actors[decision.name]
-            actor.execute(actor.cast_state(state.children_state[decision.name]))
+            actor.execute_any(state.children_state[decision.name])
 
     @abstractmethod
     def decide(self, state: OST) -> Decision | None:
