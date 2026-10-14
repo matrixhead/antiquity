@@ -29,9 +29,9 @@ class Actor(ABC, Generic[ST]):
     def execute(self, state: ST) -> Any:
         pass
 
-    def execute_any(self, state: State) -> Any:
+    def cast_state(self, state: State) -> ST:
         """Type-erased entry point for callers that don't know this actor's ST."""
-        return self.execute(cast(ST, state))
+        return cast(ST, state)
 
 
 class ActorRef(Protocol):
@@ -42,7 +42,9 @@ class ActorRef(Protocol):
 
     def make_state(self) -> State: ...
 
-    def execute_any(self, state: State) -> Any: ...
+    def cast_state(self, state: State) -> State: ...
+
+    def execute(self, state: Any) -> Any: ...
 
 
 @dataclass
@@ -84,7 +86,7 @@ class Orchestrator(Actor[OST]):
             if decision is None:
                 break
             actor = self.actors[decision.name]
-            actor.execute_any(state.children_state[decision.name])
+            actor.execute(actor.cast_state(state.children_state[decision.name]))
 
     @abstractmethod
     def decide(self, state: OST) -> Decision | None:
