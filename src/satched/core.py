@@ -36,10 +36,6 @@ class Actor(ABC, Generic[ST]):
 
 class ActorRef(Protocol):
     """A type-erased actor: its concrete state type is unknown to the holder.
-
-    ``Actor[ST]`` satisfies this structurally (covariant ``make_state``, exact
-    ``execute_any``), so heterogeneous actors can be stored together without
-    falling back to ``Actor[Any]``.
     """
 
     name: str
