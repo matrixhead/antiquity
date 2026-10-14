@@ -53,7 +53,7 @@ class ActorRef(Protocol):
 
 @dataclass
 class OrchestratorState(State):
-    children_state: dict[str, State] = field(default_factory=dict)
+    children_state: dict[str, State] = field(default_factory=dict, init=False)
 
 
 OST = TypeVar("OST", bound="OrchestratorState")
