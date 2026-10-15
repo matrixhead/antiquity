@@ -17,7 +17,6 @@ ST = TypeVar("ST", bound="State")
 
 
 class Actor(ABC, Generic[ST]):
-
     def __init__(self, name: str, state_type: type[ST]) -> None:
         self.name = name
         self.state_type = state_type
@@ -26,21 +25,20 @@ class Actor(ABC, Generic[ST]):
         return self.state_type()
 
     @abstractmethod
-    def execute(self, state: ST) -> ST:
+    async def execute(self, state: ST) -> ST:
         pass
 
     def cast_state(self, state: State) -> ST:
         """Reinterpret a type-erased state as this actor's ST."""
         return cast(ST, state)
 
-    def execute_any(self, state: State) -> Any:
+    async def execute_any(self, state: State) -> Any:
         """Type-erased entry point for callers that don't know this actor's ST."""
-        return self.execute(self.cast_state(state))
+        return await self.execute(self.cast_state(state))
 
 
 class ActorRef(Protocol):
-    """A type-erased actor: its concrete state type is unknown to the holder.
-    """
+    """A type-erased actor: its concrete state type is unknown to the holder."""
 
     name: str
 
@@ -48,7 +46,7 @@ class ActorRef(Protocol):
 
     def cast_state(self, state: State) -> State: ...
 
-    def execute_any(self, state: State) -> Any: ...
+    async def execute_any(self, state: State) -> Any: ...
 
 
 @dataclass
@@ -79,7 +77,6 @@ class Decision:
 
 
 class Orchestrator(WorkflowActor[OST]):
-
     def __init__(
         self,
         name: str,
@@ -95,14 +92,14 @@ class Orchestrator(WorkflowActor[OST]):
             state.children_state[name] = actor.make_state()
         return state
 
-    def execute(self, state: OST) -> OST:
+    async def execute(self, state: OST) -> OST:
         """Run decision/execute turns until a decision names no child actor."""
         while True:
             decision = self.decide(state)
             if decision is None:
                 break
             actor = self.actors[decision.name]
-            state.children_state[decision.name] = actor.execute_any(
+            state.children_state[decision.name] = await actor.execute_any(
                 state.children_state[decision.name]
             )
         return state
@@ -133,12 +130,11 @@ LST = TypeVar("LST", bound="LeafActorState")
 
 
 class LeafActor(ActivityActor[LST]):
-
-    def execute(self, state: LST) -> LST:
-        return self.run_activity(state)
+    async def execute(self, state: LST) -> LST:
+        return await self.run_activity(state)
 
     @abstractmethod
-    def run_activity(self, state: LST) -> LST:
+    async def run_activity(self, state: LST) -> LST:
         pass
 
 

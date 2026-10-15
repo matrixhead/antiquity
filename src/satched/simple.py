@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+import inspect
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from typing import TypeVar
 
@@ -55,10 +56,13 @@ class SimpleLeafActor(LeafActor[SLS]):
         self,
         name: str,
         state_type: type[SLS],
-        activity: Callable[[SLS], SLS],
+        activity: Callable[[SLS], SLS | Awaitable[SLS]],
     ) -> None:
         super().__init__(name, state_type)
         self.activity = activity
 
-    def run_activity(self, state: SLS) -> SLS:
-        return self.activity(state)
+    async def run_activity(self, state: SLS) -> SLS:
+        result = self.activity(state)
+        if inspect.isawaitable(result):
+            return await result
+        return result
