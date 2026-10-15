@@ -24,30 +24,30 @@ from satched.simple import (
 
 @dataclasses.dataclass
 class ParentOrchState(SimpleOrchestratorState):
-    output:int
+    output:int = 0
     init_value:int = 76
     last_ran:Optional[str] = None
 
 @dataclasses.dataclass
 class MyState(SimpleLeafActorState):
-    input:int
-    output:int
+    input:int = 0
+    output:int = 0
 
 @dataclasses.dataclass
 class ChildOrchState(SimpleOrchestratorState):
-    input:int
-    output:int
+    input:int = 0
+    output:int = 0
     last_ran:Optional[str] = None
 
 @dataclasses.dataclass
 class CustomWorkflowState(WorkflowActorState):
-    input:int
-    output:int
+    input:int = 0
+    output:int = 0
 
 @dataclasses.dataclass
 class CustomActivityState(ActivityActorState):
-    input:int
-    output:int
+    input:int = 0
+    output:int = 0
 
 def parent_decider(state: ParentOrchState) -> Decision | None:
     if state.last_ran is None:
