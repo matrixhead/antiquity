@@ -52,7 +52,19 @@ class ActorRef(Protocol):
 
 
 @dataclass
-class OrchestratorState(State):
+class WorkflowActorState(State):
+    pass
+
+
+WST = TypeVar("WST", bound="WorkflowActorState")
+
+
+class WorkflowActor(Actor[WST]):
+    pass
+
+
+@dataclass
+class OrchestratorState(WorkflowActorState):
     children_state: dict[str, State] = field(default_factory=dict, init=False)
 
 
@@ -66,7 +78,7 @@ class Decision:
     name: str
 
 
-class Orchestrator(Actor[OST]):
+class Orchestrator(WorkflowActor[OST]):
 
     def __init__(
         self,
@@ -101,14 +113,26 @@ class Orchestrator(Actor[OST]):
 
 
 @dataclass
-class LeafActorState(State):
+class ActivityActorState(State):
+    pass
+
+
+AST = TypeVar("AST", bound="ActivityActorState")
+
+
+class ActivityActor(Actor[AST]):
+    pass
+
+
+@dataclass
+class LeafActorState(ActivityActorState):
     pass
 
 
 LST = TypeVar("LST", bound="LeafActorState")
 
 
-class LeafActor(Actor[LST]):
+class LeafActor(ActivityActor[LST]):
 
     def execute(self, state: LST) -> LST:
         return self.run_activity(state)

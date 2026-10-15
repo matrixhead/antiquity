@@ -1,6 +1,8 @@
 """satched: Add your description here."""
 
 from satched.core import (
+    ActivityActor,
+    ActivityActorState,
     Actor,
     ActorRef,
     Decision,
@@ -9,6 +11,8 @@ from satched.core import (
     Orchestrator,
     OrchestratorState,
     State,
+    WorkflowActor,
+    WorkflowActorState,
     run,
 )
 from satched.simple import (
@@ -23,6 +27,8 @@ __version__ = "0.1.0"
 __all__ = [
     "Actor",
     "ActorRef",
+    "ActivityActor",
+    "ActivityActorState",
     "Decision",
     "LeafActor",
     "LeafActorState",
@@ -33,6 +39,8 @@ __all__ = [
     "SimpleOrchestrator",
     "SimpleOrchestratorState",
     "State",
+    "WorkflowActor",
+    "WorkflowActorState",
     "__version__",
     "main",
     "run",

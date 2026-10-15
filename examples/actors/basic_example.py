@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 import dataclasses
-from satched import run, Orchestrator
+from satched import (
+    Orchestrator,
+    ActivityActor,
+    ActivityActorState,
+    WorkflowActor,
+    WorkflowActorState,
+    run,
+)
 
 from collections.abc import Callable
 from typing import Any, Optional, cast
@@ -32,6 +39,16 @@ class ChildOrchState(SimpleOrchestratorState):
     output:int
     last_ran:Optional[str] = None
 
+@dataclasses.dataclass
+class CustomWorkflowState(WorkflowActorState):
+    input:int
+    output:int
+
+@dataclasses.dataclass
+class CustomActivityState(ActivityActorState):
+    input:int
+    output:int
+
 def parent_decider(state: ParentOrchState) -> Decision | None:
     if state.last_ran is None:
         next_child_state = cast(MyState,state.children_state["multi"])
@@ -52,6 +69,18 @@ def parent_decider(state: ParentOrchState) -> Decision | None:
         return Decision("child_orch")
     elif state.last_ran == "child_orch":
         last_child_state = cast(ChildOrchState,state.children_state["child_orch"])
+        next_child_state = cast(CustomWorkflowState,state.children_state["custom_workflow"])
+        next_child_state.input = last_child_state.output
+        state.last_ran = "custom_workflow"
+        return Decision("custom_workflow")
+    elif state.last_ran == "custom_workflow":
+        last_child_state = cast(CustomWorkflowState,state.children_state["custom_workflow"])
+        next_child_state = cast(CustomActivityState,state.children_state["custom_activity"])
+        next_child_state.input = last_child_state.output
+        state.last_ran = "custom_activity"
+        return Decision("custom_activity")
+    elif state.last_ran == "custom_activity":
+        last_child_state = cast(CustomActivityState,state.children_state["custom_activity"])
         state.output = last_child_state.output
         return None
 
@@ -76,6 +105,19 @@ def add_activity(state: MyState) -> MyState:
     state.output = state.input + 23
     return state
 
+class CustomWorkflow(WorkflowActor[CustomWorkflowState]):
+
+    def execute(self, state: CustomWorkflowState) -> CustomWorkflowState:
+        state.output = state.input - 1
+        return state
+
+
+class CustomActivity(ActivityActor[CustomActivityState]):
+
+    def execute(self, state: CustomActivityState) -> CustomActivityState:
+        state.output = state.input - 1
+        return state
+
 run(
     SimpleOrchestrator(
         name="parent_orch",
@@ -91,7 +133,9 @@ run(
                 actors=[
                     SimpleLeafActor(name="child_multi",state_type=MyState,activity= multi_activity),
                 ]
-            )
+            ),
+            CustomWorkflow(name="custom_workflow", state_type=CustomWorkflowState),
+            CustomActivity(name="custom_activity", state_type=CustomActivityState),
             ]
 
     )
