@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import cast
+from typing import Any, cast
 
 from satched import (
     ActivityActor,
@@ -114,11 +114,23 @@ class CustomWorkflow(WorkflowActor[CustomWorkflowState]):
         state.output = state.input - 1
         return state
 
+    def serialize_state(self, state: CustomWorkflowState) -> dict[str, Any]:
+        return dataclasses.asdict(state)
+
+    def deserialize_state(self, data: dict[str, Any]) -> CustomWorkflowState:
+        return CustomWorkflowState(**data)
+
 
 class CustomActivity(ActivityActor[CustomActivityState]):
     async def execute(self, state: CustomActivityState) -> CustomActivityState:
         state.output = state.input - 1
         return state
+
+    def serialize_state(self, state: CustomActivityState) -> dict[str, Any]:
+        return dataclasses.asdict(state)
+
+    def deserialize_state(self, data: dict[str, Any]) -> CustomActivityState:
+        return CustomActivityState(**data)
 
 
 run(

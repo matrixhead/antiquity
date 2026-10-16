@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any, Generic, Protocol, TypeVar, cast
 
 
@@ -36,6 +36,16 @@ class Actor(ABC, Generic[ST]):
         """Type-erased entry point for callers that don't know this actor's ST."""
         return await self.execute(self.cast_state(state))
 
+    @abstractmethod
+    def serialize_state(self, state: ST) -> dict[str, Any]:
+        """Encode this actor's state for transport across a boundary."""
+        pass
+
+    @abstractmethod
+    def deserialize_state(self, data: dict[str, Any]) -> ST:
+        """Decode state produced by ``serialize_state``."""
+        pass
+
 
 class ActorRef(Protocol):
     """A type-erased actor: its concrete state type is unknown to the holder."""
@@ -47,6 +57,10 @@ class ActorRef(Protocol):
     def cast_state(self, state: State) -> State: ...
 
     async def execute_any(self, state: State) -> Any: ...
+
+    def serialize_state(self, state: Any) -> dict[str, Any]: ...
+
+    def deserialize_state(self, data: dict[str, Any]) -> State: ...
 
 
 @dataclass
@@ -92,6 +106,18 @@ class Orchestrator(WorkflowActor[OST]):
             state.children_state[name] = actor.make_state()
         return state
 
+    def serialize_state(self, state: OST) -> dict[str, Any]:
+        return {
+            name: actor.serialize_state(state.children_state[name])
+            for name, actor in self.actors.items()
+        }
+
+    def deserialize_state(self, data: dict[str, Any]) -> OST:
+        state = self.state_type()
+        for name, actor in self.actors.items():
+            state.children_state[name] = actor.deserialize_state(data[name])
+        return state
+
     async def execute(self, state: OST) -> OST:
         """Run decision/execute turns until a decision names no child actor."""
         while True:
@@ -130,6 +156,12 @@ LST = TypeVar("LST", bound="LeafActorState")
 
 
 class LeafActor(ActivityActor[LST]):
+    def serialize_state(self, state: LST) -> dict[str, Any]:
+        return asdict(state)
+
+    def deserialize_state(self, data: dict[str, Any]) -> LST:
+        return self.state_type(**data)
+
     async def execute(self, state: LST) -> LST:
         return await self.run_activity(state)
 
