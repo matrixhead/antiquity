@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, cast
+from typing import Any
 
 from satched import (
     ActivityActor,
@@ -55,46 +55,44 @@ class CustomActivityState(ActivityActorState):
 
 def parent_decider(state: ParentOrchState) -> Decision | None:
     if state.last_ran is None:
-        multi_state = cast(MyState, state.children_state["multi"])
+        multi_state = MyState.from_parent(state, "multi")
         multi_state.input = state.init_value
         state.last_ran = "multi"
         return Decision("multi")
     elif state.last_ran == "multi":
-        add_state = cast(MyState, state.children_state["add"])
-        add_state.input = cast(MyState, state.children_state["multi"]).output
+        add_state = MyState.from_parent(state, "add")
+        add_state.input = MyState.from_parent(state, "multi").output
         state.last_ran = "add"
         return Decision("add")
     elif state.last_ran == "add":
-        child_orch_state = cast(ChildOrchState, state.children_state["child_orch"])
-        child_orch_state.input = cast(MyState, state.children_state["add"]).output
+        child_orch_state = ChildOrchState.from_parent(state, "child_orch")
+        child_orch_state.input = MyState.from_parent(state, "add").output
         state.last_ran = "child_orch"
         return Decision("child_orch")
     elif state.last_ran == "child_orch":
-        workflow_state = cast(CustomWorkflowState, state.children_state["custom_workflow"])
-        workflow_state.input = cast(ChildOrchState, state.children_state["child_orch"]).output
+        workflow_state = CustomWorkflowState.from_parent(state, "custom_workflow")
+        workflow_state.input = ChildOrchState.from_parent(state, "child_orch").output
         state.last_ran = "custom_workflow"
         return Decision("custom_workflow")
     elif state.last_ran == "custom_workflow":
-        activity_state = cast(CustomActivityState, state.children_state["custom_activity"])
-        activity_state.input = cast(
-            CustomWorkflowState, state.children_state["custom_workflow"]
-        ).output
+        activity_state = CustomActivityState.from_parent(state, "custom_activity")
+        activity_state.input = CustomWorkflowState.from_parent(state, "custom_workflow").output
         state.last_ran = "custom_activity"
         return Decision("custom_activity")
     elif state.last_ran == "custom_activity":
-        state.output = cast(CustomActivityState, state.children_state["custom_activity"]).output
+        state.output = CustomActivityState.from_parent(state, "custom_activity").output
         return None
     return None
 
 
 def child_decider(state: ChildOrchState) -> Decision | None:
     if state.last_ran is None:
-        child_multi_state = cast(MyState, state.children_state["child_multi"])
+        child_multi_state = MyState.from_parent(state, "child_multi")
         child_multi_state.input = state.input
         state.last_ran = "child_multi"
         return Decision("child_multi")
     elif state.last_ran == "child_multi":
-        state.output = cast(MyState, state.children_state["child_multi"]).output
+        state.output = MyState.from_parent(state, "child_multi").output
         return None
     return None
 

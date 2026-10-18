@@ -5,12 +5,19 @@ from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import asdict, dataclass, field
 from typing import Any, Generic, Protocol, TypeVar, cast
 
+CST = TypeVar("CST", bound="State")
+
 
 @dataclass
 class State:
     """Base class for all actor state."""
 
-    pass
+    @classmethod
+    def from_parent(cls: type[CST], parent: OrchestratorState, name: str) -> CST:
+        child = parent.children_state[name]
+        if not isinstance(child, cls):
+            raise TypeError(f"child {name!r} is a {type(child).__name__}, not a {cls.__name__}")
+        return child
 
 
 ST = TypeVar("ST", bound="State")
