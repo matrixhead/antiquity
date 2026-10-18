@@ -36,7 +36,7 @@ class Actor(ABC, Generic[ST]):
         """Reinterpret a type-erased state as this actor's ST."""
         return cast(ST, state)
 
-    async def execute_any(self, state: State) -> Any:
+    async def execute_any(self, state: State) -> State:
         """Type-erased entry point for callers that don't know this actor's ST."""
         return await self.execute(self.cast_state(state))
 
@@ -67,7 +67,7 @@ class ActorRef(Protocol):
 
     def cast_state(self, state: State) -> State: ...
 
-    async def execute_any(self, state: State) -> Any: ...
+    async def execute_any(self, state: State) -> State: ...
 
     async def dispatch(self, state: State) -> State: ...
 

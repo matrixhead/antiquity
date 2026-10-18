@@ -21,7 +21,7 @@ def test_version() -> None:
 
 
 async def _inline(actor: ActorRef, state: State) -> State:
-    return cast(State, await actor.execute_any(state))
+    return await actor.execute_any(state)
 
 
 def _register_inline(actor: ActorRef) -> None:
