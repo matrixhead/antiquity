@@ -13,7 +13,6 @@ from satched.core import (
     State,
     WorkflowActor,
     WorkflowActorState,
-    run,
 )
 from satched.simple import (
     SimpleLeafActor,
@@ -21,6 +20,7 @@ from satched.simple import (
     SimpleOrchestrator,
     SimpleOrchestratorState,
 )
+from satched.temporal import register
 
 __version__ = "0.1.0"
 
@@ -43,7 +43,7 @@ __all__ = [
     "WorkflowActorState",
     "__version__",
     "main",
-    "run",
+    "register",
 ]
 
 

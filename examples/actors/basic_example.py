@@ -10,7 +10,7 @@ from satched import (
     ActivityActorState,
     WorkflowActor,
     WorkflowActorState,
-    run,
+    register,
 )
 from satched.core import Decision
 from satched.simple import (
@@ -133,7 +133,7 @@ class CustomActivity(ActivityActor[CustomActivityState]):
         return CustomActivityState(**data)
 
 
-run(
+register(
     SimpleOrchestrator(
         name="parent_orch",
         state_type=ParentOrchState,

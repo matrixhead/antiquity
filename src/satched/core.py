@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import asdict, dataclass, field
 from typing import Any, Generic, Protocol, TypeVar, cast
 
@@ -15,8 +15,12 @@ class State:
 
 ST = TypeVar("ST", bound="State")
 
+Dispatcher = Callable[..., Awaitable[State]]
+
 
 class Actor(ABC, Generic[ST]):
+    dispatcher: Dispatcher | None = None
+
     def __init__(self, name: str, state_type: type[ST]) -> None:
         self.name = name
         self.state_type = state_type
@@ -36,6 +40,11 @@ class Actor(ABC, Generic[ST]):
         """Type-erased entry point for callers that don't know this actor's ST."""
         return await self.execute(self.cast_state(state))
 
+    async def dispatch(self, state: State) -> State:
+        if self.dispatcher is None:
+            raise RuntimeError(f"Actor {self.name!r} has no dispatcher")
+        return await self.dispatcher(self, state)
+
     @abstractmethod
     def serialize_state(self, state: ST) -> dict[str, Any]:
         """Encode this actor's state for transport across a boundary."""
@@ -52,11 +61,15 @@ class ActorRef(Protocol):
 
     name: str
 
+    dispatcher: Dispatcher | None
+
     def make_state(self) -> State: ...
 
     def cast_state(self, state: State) -> State: ...
 
     async def execute_any(self, state: State) -> Any: ...
+
+    async def dispatch(self, state: State) -> State: ...
 
     def serialize_state(self, state: Any) -> dict[str, Any]: ...
 
@@ -125,7 +138,7 @@ class Orchestrator(WorkflowActor[OST]):
             if decision is None:
                 break
             actor = self.actors[decision.name]
-            state.children_state[decision.name] = await actor.execute_any(
+            state.children_state[decision.name] = await actor.dispatch(
                 state.children_state[decision.name]
             )
         return state
@@ -168,8 +181,3 @@ class LeafActor(ActivityActor[LST]):
     @abstractmethod
     async def run_activity(self, state: LST) -> LST:
         pass
-
-
-def run(orchestrator: Orchestrator[OST]) -> Any:
-    """Run an orchestrator."""
-    ...

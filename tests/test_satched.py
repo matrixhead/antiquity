@@ -2,18 +2,33 @@ import asyncio
 from dataclasses import dataclass
 from typing import cast
 
+import pytest
+
 from satched import __version__
-from satched.core import Decision
+from satched.core import ActorRef, Decision, Orchestrator, State
+from satched.registry import actors
 from satched.simple import (
     SimpleLeafActor,
     SimpleLeafActorState,
     SimpleOrchestrator,
     SimpleOrchestratorState,
 )
+from satched.temporal import ActorWorkflow, actor_activity, register
 
 
 def test_version() -> None:
     assert __version__ == "0.1.0"
+
+
+async def _inline(actor: ActorRef, state: State) -> State:
+    return cast(State, await actor.execute_any(state))
+
+
+def _register_inline(actor: ActorRef) -> None:
+    actor.dispatcher = _inline
+    if isinstance(actor, Orchestrator):
+        for child in actor.actors.values():
+            _register_inline(child)
 
 
 @dataclass
@@ -64,6 +79,8 @@ def test_orchestrator_runs_to_completion() -> None:
         ],
     )
 
+    _register_inline(orch)
+
     state = asyncio.run(orch.execute(orch.make_state()))
 
     assert state.last_ran == "inc"
@@ -105,6 +122,8 @@ def test_nested_state_round_trips_through_serialization() -> None:
         actors=[inner],
     )
 
+    _register_inline(outer)
+
     state = asyncio.run(outer.execute(outer.make_state()))
     assert cast(InnerState, state.children_state["inner"]).total == 10
 
@@ -114,3 +133,31 @@ def test_nested_state_round_trips_through_serialization() -> None:
     assert outer.serialize_state(restored) == data
     inner_state = cast(InnerState, restored.children_state["inner"])
     assert cast(ValueState, inner_state.children_state["double"]).output == 10
+
+
+def test_register_collects_the_whole_tree() -> None:
+    inner = SimpleOrchestrator(
+        name="inner",
+        state_type=InnerState,
+        decider=_inner_decider,
+        actors=[SimpleLeafActor(name="double", state_type=ValueState, activity=_double)],
+    )
+    outer = SimpleOrchestrator(
+        name="outer",
+        state_type=RootState,
+        decider=_run_inner_once,
+        actors=[inner],
+    )
+
+    workflows, activities = register(outer)
+
+    assert workflows == [ActorWorkflow]
+    assert activities == [actor_activity]
+    assert set(actors) == {"outer", "inner", "double"}
+
+
+def test_dispatch_without_dispatcher_raises() -> None:
+    actor = SimpleLeafActor(name="double", state_type=ValueState, activity=_double)
+
+    with pytest.raises(RuntimeError, match="has no dispatcher"):
+        asyncio.run(actor.dispatch(ValueState()))
