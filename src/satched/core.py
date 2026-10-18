@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable, Iterable
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Generic, Protocol, TypeVar, cast
 
 CST = TypeVar("CST", bound="State")
@@ -127,15 +127,19 @@ class Orchestrator(WorkflowActor[OST]):
         return state
 
     def serialize_state(self, state: OST) -> dict[str, Any]:
-        return {
+        data = {f.name: getattr(state, f.name) for f in fields(state) if f.name != "children_state"}
+        data["children_state"] = {
             name: actor.serialize_state(state.children_state[name])
             for name, actor in self.actors.items()
         }
+        return data
 
     def deserialize_state(self, data: dict[str, Any]) -> OST:
-        state = self.state_type()
+        children = data["children_state"]
+        own = {name: value for name, value in data.items() if name != "children_state"}
+        state = self.state_type(**own)
         for name, actor in self.actors.items():
-            state.children_state[name] = actor.deserialize_state(data[name])
+            state.children_state[name] = actor.deserialize_state(children[name])
         return state
 
     async def execute(self, state: OST) -> OST:
