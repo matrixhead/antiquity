@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Awaitable, Callable, Iterable
+from collections.abc import Awaitable, Callable, Iterable, Iterator
 from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Generic, Protocol, TypeVar, cast
 
@@ -157,6 +157,14 @@ class Orchestrator(WorkflowActor[OST]):
     @abstractmethod
     def decide(self, state: OST) -> Decision | None:
         """Choose the next actor to invoke, or None to stop."""
+
+
+def walk(actor: ActorRef) -> Iterator[ActorRef]:
+    """Yield ``actor`` and, depth-first, every actor beneath it."""
+    yield actor
+    if isinstance(actor, Orchestrator):
+        for child in actor.actors.values():
+            yield from walk(child)
 
 
 @dataclass

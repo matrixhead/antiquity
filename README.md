@@ -15,8 +15,17 @@ uv sync            # create .venv and install the package + dev deps
 
 ## Usage
 
+Local, in-process:
+
 ```sh
-uv run python -m satched
+uv run python examples/actors/run_local.py
+```
+
+Via Temporal (needs a dev server on `localhost:7233`):
+
+```sh
+temporal server start-dev
+uv run python examples/actors/temporal_worker.py
 ```
 
 ## Development
@@ -25,5 +34,5 @@ uv run python -m satched
 uv run pytest              # run tests with coverage
 uv run ruff check .        # lint
 uv run ruff format .       # format
-uv run mypy                # type check
+uv run ty check            # type check
 ```

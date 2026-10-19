@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from datetime import timedelta
-from typing import Any
+from typing import Any, Protocol
 
 from temporalio import activity, workflow
 from temporalio.common import RawValue
@@ -14,8 +14,8 @@ from satched.core import (
     WST,
     ActivityActor,
     ActorRef,
-    Orchestrator,
     WorkflowActor,
+    walk,
 )
 
 with workflow.unsafe.imports_passed_through():
@@ -24,7 +24,11 @@ with workflow.unsafe.imports_passed_through():
 ACTIVITY_TIMEOUT = timedelta(minutes=5)
 
 
-def register(actor: ActorRef) -> tuple[list[type[Any]], list[Callable[..., Any]]]:
+class ActivityHandler(Protocol):
+    async def __call__(self, args: Sequence[RawValue]) -> dict[str, Any]: ...
+
+
+def register(actor: ActorRef) -> tuple[list[type[ActorWorkflow]], list[ActivityHandler]]:
     """Register an actor tree and return the handlers a worker needs."""
     actors.clear()
     _collect(actor)
@@ -32,14 +36,12 @@ def register(actor: ActorRef) -> tuple[list[type[Any]], list[Callable[..., Any]]
 
 
 def _collect(actor: ActorRef) -> None:
-    actors[actor.name] = actor
-    if isinstance(actor, WorkflowActor):
-        actor.dispatcher = _dispatch_workflow
-    elif isinstance(actor, ActivityActor):
-        actor.dispatcher = _dispatch_activity
-    if isinstance(actor, Orchestrator):
-        for child in actor.actors.values():
-            _collect(child)
+    for node in walk(actor):
+        actors[node.name] = node
+        if isinstance(node, WorkflowActor):
+            node.dispatcher = _dispatch_workflow
+        elif isinstance(node, ActivityActor):
+            node.dispatcher = _dispatch_activity
 
 
 async def _dispatch_workflow(actor: WorkflowActor[WST], state: WST) -> WST:

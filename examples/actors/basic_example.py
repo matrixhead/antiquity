@@ -10,7 +10,6 @@ from satched import (
     ActivityActorState,
     WorkflowActor,
     WorkflowActorState,
-    register,
 )
 from satched.core import Decision
 from satched.simple import (
@@ -131,26 +130,22 @@ class CustomActivity(ActivityActor[CustomActivityState]):
         return CustomActivityState(**data)
 
 
-register(
-    SimpleOrchestrator(
-        name="parent_orch",
-        state_type=ParentOrchState,
-        decider=parent_decider,
-        actors=[
-            SimpleLeafActor(name="multi", state_type=MyState, activity=multi_activity),
-            SimpleLeafActor(name="add", state_type=MyState, activity=add_activity),
-            SimpleOrchestrator(
-                name="child_orch",
-                state_type=ChildOrchState,
-                decider=child_decider,
-                actors=[
-                    SimpleLeafActor(
-                        name="child_multi", state_type=MyState, activity=multi_activity
-                    ),
-                ],
-            ),
-            CustomWorkflow(name="custom_workflow", state_type=CustomWorkflowState),
-            CustomActivity(name="custom_activity", state_type=CustomActivityState),
-        ],
-    )
+root = SimpleOrchestrator(
+    name="parent_orch",
+    state_type=ParentOrchState,
+    decider=parent_decider,
+    actors=[
+        SimpleLeafActor(name="multi", state_type=MyState, activity=multi_activity),
+        SimpleLeafActor(name="add", state_type=MyState, activity=add_activity),
+        SimpleOrchestrator(
+            name="child_orch",
+            state_type=ChildOrchState,
+            decider=child_decider,
+            actors=[
+                SimpleLeafActor(name="child_multi", state_type=MyState, activity=multi_activity),
+            ],
+        ),
+        CustomWorkflow(name="custom_workflow", state_type=CustomWorkflowState),
+        CustomActivity(name="custom_activity", state_type=CustomActivityState),
+    ],
 )
