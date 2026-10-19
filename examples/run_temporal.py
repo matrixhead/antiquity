@@ -1,9 +1,17 @@
-"""Run the basic example through a Temporal server on localhost:7233."""
+"""Run the basic example through a Temporal server on localhost:7233.
+
+Start a dev server first, then run this script:
+
+    temporal server start-dev
+    uv run python examples/run_temporal.py
+
+The dev server's UI is at http://localhost:8233.
+"""
 
 import asyncio
 import uuid
 
-from basic_example import root
+from basic.example import root
 from temporalio.client import Client
 from temporalio.worker import Worker
 

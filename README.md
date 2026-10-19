@@ -13,21 +13,6 @@ Add your description here.
 uv sync            # create .venv and install the package + dev deps
 ```
 
-## Usage
-
-Local, in-process:
-
-```sh
-uv run python examples/actors/run_local.py
-```
-
-Via Temporal (needs a dev server on `localhost:7233`):
-
-```sh
-temporal server start-dev
-uv run python examples/actors/temporal_worker.py
-```
-
 ## Development
 
 ```sh

@@ -1,8 +1,11 @@
-"""Run the basic example in-process."""
+"""Run the basic example in-process.
+
+uv run python examples/run_local.py
+"""
 
 import asyncio
 
-from basic_example import root
+from basic.example import root
 
 from satched.backend.local import run
 
