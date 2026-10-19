@@ -1,7 +1,7 @@
 [project]
 name = "antiquity"
 version = "0.1.0"
-description = "Add your description here"
+description = "A durable actor-tree orchestration framework built on top of Temporal."
 readme = "README.md"
 authors = [{ name = "mhead", email = "mtrxhead@protonmail.com" }]
 requires-python = ">=3.10"
