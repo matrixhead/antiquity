@@ -1,6 +1,6 @@
-"""satched: Add your description here."""
+"""antiquity: Add your description here."""
 
-from satched.core import (
+from antiquity.core import (
     ActivityActor,
     ActivityActorState,
     Actor,
@@ -14,7 +14,7 @@ from satched.core import (
     WorkflowActor,
     WorkflowActorState,
 )
-from satched.simple import (
+from antiquity.simple import (
     SimpleLeafActor,
     SimpleLeafActorState,
     SimpleOrchestrator,
@@ -47,4 +47,4 @@ __all__ = [
 
 def main() -> None:
     """Entry point for the package."""
-    print("Hello from satched!")
+    print("Hello from antiquity!")

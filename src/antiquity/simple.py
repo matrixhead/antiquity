@@ -7,7 +7,7 @@ from collections.abc import Awaitable, Callable, Iterable
 from dataclasses import dataclass
 from typing import TypeVar
 
-from satched.core import (
+from antiquity.core import (
     ActorRef,
     Decision,
     LeafActor,

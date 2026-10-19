@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from satched.core import ActorRef
+from antiquity.core import ActorRef
 
 actors: dict[str, ActorRef] = {}

@@ -15,9 +15,9 @@ from basic.example import root
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from satched.backend.temporal import register
+from antiquity.backend.temporal import register
 
-TASK_QUEUE = "satched"
+TASK_QUEUE = "antiquity"
 
 
 async def main() -> None:

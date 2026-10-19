@@ -9,7 +9,7 @@ from typing import Any, Protocol
 from temporalio import activity, workflow
 from temporalio.common import RawValue
 
-from satched.core import (
+from antiquity.core import (
     AST,
     WST,
     ActivityActor,
@@ -19,7 +19,7 @@ from satched.core import (
 )
 
 with workflow.unsafe.imports_passed_through():
-    from satched.registry import actors
+    from antiquity.registry import actors
 
 ACTIVITY_TIMEOUT = timedelta(minutes=5)
 

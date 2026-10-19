@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from satched.core import ST, Actor, ActorRef, State, walk
+from antiquity.core import ST, Actor, ActorRef, State, walk
 
 
 async def _dispatch(actor: ActorRef, state: State) -> State:

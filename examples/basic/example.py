@@ -5,14 +5,14 @@ from __future__ import annotations
 import dataclasses
 from typing import Any
 
-from satched import (
+from antiquity import (
     ActivityActor,
     ActivityActorState,
     WorkflowActor,
     WorkflowActorState,
 )
-from satched.core import Decision
-from satched.simple import (
+from antiquity.core import Decision
+from antiquity.simple import (
     SimpleLeafActor,
     SimpleLeafActorState,
     SimpleOrchestrator,

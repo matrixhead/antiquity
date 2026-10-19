@@ -1,5 +1,5 @@
 [project]
-name = "satched"
+name = "antiquity"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -23,10 +23,10 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/satched"]
+packages = ["src/antiquity"]
 
 [tool.pytest.ini_options]
-addopts = "-ra --cov=satched --cov-report=term-missing"
+addopts = "-ra --cov=antiquity --cov-report=term-missing"
 testpaths = ["tests"]
 
 [tool.ruff]

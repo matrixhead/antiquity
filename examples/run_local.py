@@ -7,7 +7,7 @@ import asyncio
 
 from basic.example import root
 
-from satched.backend.local import run
+from antiquity.backend.local import run
 
 
 def main() -> None:

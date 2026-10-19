@@ -4,8 +4,8 @@ Add tests manually, only when asked. Suggested shape:
 
     from dataclasses import dataclass
 
-    from satched.core import Decision
-    from satched.simple import SimpleLeafActor, SimpleLeafActorState
+    from antiquity.core import Decision
+    from antiquity.simple import SimpleLeafActor, SimpleLeafActorState
 
     @dataclass
     class ValueState(SimpleLeafActorState):
@@ -16,7 +16,7 @@ Add tests manually, only when asked. Suggested shape:
         ...
 """
 
-from satched import __version__
+from antiquity import __version__
 
 
 def test_version() -> None:
