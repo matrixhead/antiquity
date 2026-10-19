@@ -1,6 +1,6 @@
 # antiquity
 
-Add your description here.
+A durable actor-tree orchestration framework built on top of Temporal.
 
 ## Requirements
 
