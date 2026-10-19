@@ -1,4 +1,4 @@
-"""antiquity: Add your description here."""
+"""antiquity: A durable actor-tree orchestration framework built on top of Temporal."""
 
 from antiquity.core import (
     ActivityActor,
