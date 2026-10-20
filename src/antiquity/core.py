@@ -5,6 +5,10 @@ from collections.abc import Awaitable, Callable, Iterable, Iterator
 from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Generic, Protocol, TypeVar, cast
 
+# ---------------------------------------------------------------------------
+# Primitives
+# ---------------------------------------------------------------------------
+
 CST = TypeVar("CST", bound="State")
 
 
@@ -20,9 +24,9 @@ class State:
         return child
 
 
-ST = TypeVar("ST", bound="State")
-
 Dispatcher = Callable[..., Awaitable[State]]
+
+ST = TypeVar("ST", bound="State")
 
 
 class Actor(ABC, Generic[ST]):
@@ -83,6 +87,11 @@ class ActorRef(Protocol):
     def deserialize_state(self, data: dict[str, Any]) -> State: ...
 
 
+# ---------------------------------------------------------------------------
+# Workflow actors
+# ---------------------------------------------------------------------------
+
+
 @dataclass
 class WorkflowActorState(State):
     pass
@@ -96,18 +105,18 @@ class WorkflowActor(Actor[WST]):
 
 
 @dataclass
+class Decision:
+    """A named choice of actor an orchestrator can make."""
+
+    name: str
+
+
+@dataclass
 class OrchestratorState(WorkflowActorState):
     children_state: dict[str, State] = field(default_factory=dict, init=False)
 
 
 OST = TypeVar("OST", bound="OrchestratorState")
-
-
-@dataclass
-class Decision:
-    """A named choice of actor an orchestrator can make."""
-
-    name: str
 
 
 class Orchestrator(WorkflowActor[OST]):
@@ -159,12 +168,9 @@ class Orchestrator(WorkflowActor[OST]):
         """Choose the next actor to invoke, or None to stop."""
 
 
-def walk(actor: ActorRef) -> Iterator[ActorRef]:
-    """Yield ``actor`` and, depth-first, every actor beneath it."""
-    yield actor
-    if isinstance(actor, Orchestrator):
-        for child in actor.actors.values():
-            yield from walk(child)
+# ---------------------------------------------------------------------------
+# Activity actors
+# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -200,3 +206,16 @@ class LeafActor(ActivityActor[LST]):
     @abstractmethod
     async def run_activity(self, state: LST) -> LST:
         pass
+
+
+# ---------------------------------------------------------------------------
+# Tree utilities
+# ---------------------------------------------------------------------------
+
+
+def walk(actor: ActorRef) -> Iterator[ActorRef]:
+    """Yield ``actor`` and, depth-first, every actor beneath it."""
+    yield actor
+    if isinstance(actor, Orchestrator):
+        for child in actor.actors.values():
+            yield from walk(child)
